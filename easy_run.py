@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 # Import Libraries
+import sys
+
 import requests
 import re
 import json
@@ -22,9 +24,11 @@ throttle_number = 50  # Number of requests to make before sleeping for delay sec
 sleep_delay_max = 2500  # Maximum number of milliseconds to sleep for
 max_added = 250  # Maximum number of assignments to add to Todoist at once. Todoist API limit is 450 requests per 15 minutes and you can quickly hit this if adding a massive number of assignments.
 limit_reached = False  # Global var used to terminate early if limit is reached or API returns an error.
+is_scheduled = False
 
-
-def main():
+def main(p_is_scheduled = False):
+    global is_scheduled
+    is_scheduled = p_is_scheduled
     print(f"  {'#'*52}")
     print(" #     Canvas-Assignments-Transfer-For-Todoist     #")
     print(f"{'#'*52}\n")
@@ -40,7 +44,6 @@ def main():
     transfer_assignments_to_todoist()
     canvas_assignment_stats()
     print("Done!")
-
 
 # Function for Yes/No response prompts during setup
 def yes_no(question: str) -> bool:
@@ -142,9 +145,11 @@ def select_courses():
             exit()
         # Note that only courses in "Active" state are returned
         if config["courses"]:
-            use_previous_input = input(
-                "You have previously selected courses. Would you like to use the courses selected last time? (y/n) "
-            )
+            if is_scheduled:
+                use_previous_input = "y"
+            else:
+                use_previous_input = input(
+                    "You have previously selected courses. Would you like to use the courses selected last time? ([y]/n) ") or "y"
             print("")
             if use_previous_input == "y" or use_previous_input == "Y":
                 course_ids.extend(
@@ -475,4 +480,4 @@ def sleep():
 
 
 if __name__ == "__main__":
-    main()
+    main(p_is_scheduled=True)
