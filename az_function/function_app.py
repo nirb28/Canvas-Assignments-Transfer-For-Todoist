@@ -101,15 +101,11 @@ def initialize_api():
         initial_config()
     # load assignments that we can ignore
     ignore_assignment_ids.extend(
-        list(map(lambda ignore_assignment_id: int(ignore_assignment_id), config[""]))
-    )
-    course_ids.extend(
-        list(map(lambda course_id: int(course_id), config["courses"]))
+        list(map(lambda ignore_assignment_id: int(ignore_assignment_id), config["ignore_assignment_ids"]))
     )
     # create todoist_api object globally
     todoist_api = TodoistAPI(config["todoist_api_key"].strip())
     header.update({"Authorization": f"Bearer {config['canvas_api_key'].strip()}"})
-
 
 def initial_config():  # Initial configuration for first time users
     print(
@@ -305,6 +301,9 @@ def transfer_assignments_to_todoist():
     global throttle_number
     request_count = 0
     for assignment in assignments:
+        if assignment['id'] in ignore_assignment_ids:
+            print("Assignment found in the ignore list. Skipping.")
+            break
         course_name = courses_id_name_dict[assignment["course_id"]]
         project_id = todoist_project_dict[course_name]
 
