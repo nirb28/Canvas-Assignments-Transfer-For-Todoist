@@ -50,6 +50,7 @@ config = {}
 header = {}
 param = {"per_page": "100", "include": "submission", "enrollment_state": "active"}
 course_ids = []
+ignore_assignment_ids = []
 assignments = []
 todoist_tasks = []
 courses_id_name_dict = {}
@@ -98,7 +99,13 @@ def initialize_api():
     except FileNotFoundError:
         print("File not Found, running Initial Configuration")
         initial_config()
-
+    # load assignments that we can ignore
+    ignore_assignment_ids.extend(
+        list(map(lambda ignore_assignment_id: int(ignore_assignment_id), config[""]))
+    )
+    course_ids.extend(
+        list(map(lambda course_id: int(course_id), config["courses"]))
+    )
     # create todoist_api object globally
     todoist_api = TodoistAPI(config["todoist_api_key"].strip())
     header.update({"Authorization": f"Bearer {config['canvas_api_key'].strip()}"})
