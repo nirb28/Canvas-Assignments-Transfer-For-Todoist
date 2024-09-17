@@ -1,5 +1,6 @@
 import logging
 import azure.functions as func
+from dateutil import parser
 
 app = func.FunctionApp()
 
@@ -317,9 +318,16 @@ def transfer_assignments_to_todoist():
                 and task.project_id == project_id
             ):
                 is_added = True
-                # Ignore updates if assignment has no due date and already synced
+                # DS: Ignore updates if assignment has no due date and already synced
                 if assignment["due_at"] is None:
                     break
+                else:
+                    due_at = parser.parse(assignment['due_at'])
+                    now = datetime.now(timezone.utc)
+                    difference = due_at - now
+                    # DS: If more than a day old, ignore
+                    if difference.days < -1:
+                        break
                 # Handle case where task does not have due date but assignment does
                 if task.due is None and assignment["due_at"] is not None:
                     is_synced = False
@@ -428,6 +436,15 @@ def transfer_assignments_to_todoist():
 def add_new_task(assignment, project_id):
     global limit_reached
     try:
+        # DS: Ignore updates if assignment has no due date and already synced
+        if assignment["due_at"] is not None:
+            due_at = parser.parse(assignment['due_at'])
+            now = datetime.now(timezone.utc)
+            difference = due_at - now
+            # DS: If more than a day old, ignore
+            if difference.days < -1:
+                return
+
         todoist_api.add_task(
             content="["
             + assignment["name"]
